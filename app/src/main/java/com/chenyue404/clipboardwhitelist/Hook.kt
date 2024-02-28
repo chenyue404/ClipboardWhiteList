@@ -1,9 +1,7 @@
 package com.chenyue404.clipboardwhitelist
 
-import android.view.View
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -50,18 +48,19 @@ class Hook : IXposedHookLoadPackage {
 //            e.printStackTrace()
 //        }
         val hookFun = object : XC_MethodHook() {
-            var mPackageName = ""
             override fun beforeHookedMethod(param: MethodHookParam) {
-                mPackageName = param.args[1].toString()
+                val mPackageName = param.args[1].toString()
                 pref?.reload()
                 val stringSet = pref?.getStringSet(KEY, setOf())
-                log("stringSet=$stringSet")
+//                log("stringSet=$stringSet")
                 if (stringSet?.any {
                         mPackageName.contains(it.trim(), true)
                     } == true) {
                     param.result = true
-                    return
                 }
+//                if (mPackageName.contains("fooview")){
+//                    param.result = true
+//                }
             }
         }
         tryHook("com.android.server.clipboard.ClipboardService#clipboardAccessAllowed") {
@@ -71,24 +70,23 @@ class Hook : IXposedHookLoadPackage {
                 "clipboardAccessAllowed",
                 Int::class.java,
                 String::class.java,
-                Int::class.java,
-                Int::class.java,
-                hookFun
-            )
-        }
-        tryHook("com.android.server.clipboard.ClipboardService#clipboardAccessAllowed") {
-            XposedHelpers.findAndHookMethod(
-                "com.android.server.clipboard.ClipboardService",
-                classLoader,
-                "clipboardAccessAllowed",
-                Int::class.java,
-                String::class.java,
                 String::class.java,
                 Int::class.java,
                 Int::class.java,
+                Boolean::class.java,
                 hookFun
             )
         }
+//        tryHook("com.android.server.clipboard.ClipboardService#isDefaultIme"){
+//            XposedHelpers.findAndHookMethod(
+//                "com.android.server.clipboard.ClipboardService",
+//                classLoader,
+//                "isDefaultIme",
+//                Int::class.java,
+//                String::class.java,
+//                hookFun
+//            )
+//        }
     }
 
     private fun tryHook(logStr: String, unit: (() -> Unit)) {
